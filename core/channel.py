@@ -2,7 +2,7 @@
 
 Everything about the *shape* of the game -- every struct, every enum, `BotArray` as a
 sequence, `StateOption` as `Optional[T]` -- is generated into `core/_generated/` from the
-engine's own layout registry by `scripts/build`. Nothing in this file mirrors a struct, and
+engine's own layout registry by `mm-cli run`. Nothing in this file mirrors a struct, and
 nothing in it should: a hand-written mirror is exactly what drifts out of step with the
 engine and makes a bot read the wrong bytes.
 

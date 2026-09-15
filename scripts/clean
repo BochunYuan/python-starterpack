@@ -1,5 +1,0 @@
-#!/bin/sh
-set -e
-cd "$(dirname "$(realpath $0)")"/..
-find . -name "*.pyc" -delete
-find . -name "__pycache__" -type d -exec rm -rf {} +

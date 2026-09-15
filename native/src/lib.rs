@@ -11,6 +11,6 @@
 //! linker drops object files nothing references, and nothing in this crate would otherwise
 //! reference `mm_engine::ffi`. Measured, not assumed -- with the `pub use` deleted,
 //! `nm -D` on the built `.so` lists **zero** `mm_*` entry points instead of all thirteen.
-//! `scripts/build` is the place to add an `nm -D` check if that ever needs guarding
-//! automatically.
+//! mmcli's Python `build()` step (`cli/src/lang/python.rs`) is the place to add an `nm -D`
+//! check if that ever needs guarding automatically.
 pub use mm_engine::ffi::*;

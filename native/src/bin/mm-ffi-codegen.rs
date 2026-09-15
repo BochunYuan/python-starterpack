@@ -1214,7 +1214,7 @@ const SURFACE_HEADER: &str = r#"# ----------------------------------------------
 
 
 def _library_path() -> pathlib.Path:
-    """The shared library `scripts/build` compiled, beside this package.
+    """The shared library `mm-cli run` compiled for this project, beside this package.
 
     Resolved relative to this file rather than by name, so a bot run from any working
     directory finds it. A bot packaged into a zipapp would need a different answer --
@@ -1227,7 +1227,7 @@ def _library_path() -> pathlib.Path:
         if candidate.exists():
             return candidate
     raise FileNotFoundError(
-        f"no native library under {root} -- run scripts/build first"
+        f"no native library under {root} -- run mm-cli run first"
     )
 
 
@@ -1391,7 +1391,7 @@ const BANNER: &str = "\
 #
 # Every class here mirrors a Rust type's exact `#[repr(C)]` layout -- sizes, alignments and
 # field offsets are the ones the engine measured, and `tools/tests/` checks that `ctypes`
-# reproduces them. Regenerate with `scripts/build` after any engine change; this file is
+# reproduces them. Regenerate with `mm-cli run` after any engine change; this file is
 # gitignored precisely so it cannot go stale.
 #
 # The wire layer and the friendly surface on top of it are both here: `StateOption` fields

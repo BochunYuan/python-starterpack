@@ -18,7 +18,8 @@
 
 # Getting started with python
 
-1. Install [rust](https://www.rust-lang.org/tools/install)
+1. Install [rust](https://www.rust-lang.org/tools/install) — yes, for a Python bot. See
+   [Why rust?](#why-rust) below.
 
 2. Make sure you have [git](https://git-scm.com/downloads)
 
@@ -29,6 +30,28 @@
 6. Clone this repo
 
 7. Use `mm-cli help` for instructions on using the cli. To run a match, use `mm-cli run`.
+
+# Why rust?
+
+Your bot calls the engine's *own* code for the things you would otherwise have to
+reimplement — pathfinding around walls, where the payload is at a given capture, the stat
+tables, the angle helpers. It reaches them through a small C ABI rather than a Python
+re-write of the rules, which means your bot cannot disagree with the engine about them.
+
+So `mm-cli run` doesn't just launch your bot — it also:
+
+- compiles `native/`, a thin Rust shim around the engine, into a shared library, and
+- runs a generator that reads the engine's own struct layouts and writes
+  `core/_generated/`, the `ctypes` bindings your bot imports.
+
+Both come out of the same build, so they cannot drift apart. A few practical notes:
+
+- **The first build needs network**, to fetch the engine. Later builds are cached and fast.
+- **`core/_generated/` is generated output.** It is gitignored on purpose. Don't edit it and
+  don't commit it — if your editor can't resolve `GameState` or `FleetAction`, run
+  `mm-cli run` once and it will.
+- **Only `strategy/` is yours**, and it's the only thing `mm-cli submit` uploads. You never
+  need to touch `core/` or `native/`.
 
 # Submitting your code
 

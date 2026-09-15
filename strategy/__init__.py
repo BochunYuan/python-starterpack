@@ -1,8 +1,8 @@
 """Everything a strategy needs, in one import.
 
 `strategy/main.py` does `from . import *` and gets all of this. The wire types come from
-`core._generated`, which `scripts/build` writes from the engine's own layout registry -- so
-if your editor cannot resolve them, run `scripts/build` once.
+`core._generated`, which `mm-cli run` writes from the engine's own layout registry -- so
+if your editor cannot resolve them, run `mm-cli run` once.
 """
 
 from typing import List, Optional
