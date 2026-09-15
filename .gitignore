@@ -1,3 +1,5 @@
 __pycache__*
 .mm-token.txt
 logs*
+native/target/
+core/_generated/

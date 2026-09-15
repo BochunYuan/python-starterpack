@@ -1,3 +1,9 @@
 #!/bin/sh
+set -e
 
-# do nothing, python does not build
+cd "$(dirname "$(realpath "$0")")"/../native
+# The shared library Python loads through ctypes...
+cargo build --release
+# ...and the bindings that describe it, generated from the engine's own layout registry
+# into core/_generated/. Both come from the same build, so they cannot disagree.
+cargo run --release --bin mm-ffi-codegen

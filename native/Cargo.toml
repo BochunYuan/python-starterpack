@@ -1,0 +1,20 @@
+[package]
+name = "mm-python-native"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+# The name Python's ctypes.CDLL loads: libmm_python_native.{so,dylib}/mm_python_native.dll.
+name = "mm_python_native"
+crate-type = ["cdylib"]
+
+[dependencies]
+# Local path dependency for in-monorepo development (see dev/CLAUDE.md -- this workspace
+# is not itself a git repo). The real python-starterpack repo depends on mm-engine via git
+# instead, pinned by a committed Cargo.lock (see dev/ffi.md, "Competitor setup and version
+# management") -- that switch happens when this crate is extracted into that repo.
+mm-engine = { path = "../../../engine", default-features = false, features = ["client", "ffi"] }
+# `mm-ffi-codegen` reads the registries `mm-engine` submits into. Same major version as the
+# one `mm-engine` resolves, or the two would collect into different registries and the
+# generator would see an empty one.
+inventory = "0.3"
