@@ -1213,16 +1213,37 @@ const SURFACE_HEADER: &str = r#"# ----------------------------------------------
 # -----------------------------------------------------------------------------------
 
 
-def _library_path() -> pathlib.Path:
-    """The shared library `mm-cli run` compiled for this project, beside this package.
+_LIBRARY_NAMES = (
+    "libmm_python_native.so",
+    "libmm_python_native.dylib",
+    "mm_python_native.dll",
+)
 
-    Resolved relative to this file rather than by name, so a bot run from any working
-    directory finds it. A bot packaged into a zipapp would need a different answer --
-    `ctypes.CDLL` cannot open a path inside one -- which is why scheduler packaging is
-    still deferred (see dev/ffi.md, "Scope").
+
+def _library_path() -> pathlib.Path:
+    """The shared library this package's bindings were generated against.
+
+    Two answers, because a bot runs in two very different shapes.
+
+    `$MM_NATIVE_LIB` wins when set. A submitted bot is a zipapp, and `ctypes.CDLL` cannot
+    open a path inside a `.pyz` -- nor is `__file__` a real path in there -- so the API's
+    compile step drops the library beside `bot.pyz` and the `/out/bot` wrapper points this
+    variable at it. Loading from a read-only bind mount is fine; `dlopen` only needs a path.
+
+    Otherwise, the `mm-cli run` local loop: `native/target/release/`, resolved relative to
+    this file rather than by name so a bot run from any working directory finds it.
     """
+    override = os.environ.get("MM_NATIVE_LIB")
+    if override:
+        candidate = pathlib.Path(override)
+        if not candidate.exists():
+            raise FileNotFoundError(
+                f"MM_NATIVE_LIB points at {candidate}, which does not exist"
+            )
+        return candidate
+
     root = pathlib.Path(__file__).resolve().parent.parent.parent / "native" / "target" / "release"
-    for name in ("libmm_python_native.so", "libmm_python_native.dylib", "mm_python_native.dll"):
+    for name in _LIBRARY_NAMES:
         candidate = root / name
         if candidate.exists():
             return candidate
@@ -1415,6 +1436,7 @@ fn emit_bindings(reg: &Registry) -> String {
          import ctypes\n\
          import enum\n\
          import math\n\
+         import os\n\
          import pathlib\n\
          from typing import Generic, Iterator, Optional, TypeVar\n",
     );

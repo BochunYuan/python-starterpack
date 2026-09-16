@@ -9,11 +9,13 @@ name = "mm_python_native"
 crate-type = ["cdylib"]
 
 [dependencies]
-# Local path dependency for in-monorepo development (see dev/CLAUDE.md -- this workspace
-# is not itself a git repo). The real python-starterpack repo depends on mm-engine via git
-# instead, pinned by a committed Cargo.lock (see dev/ffi.md, "Competitor setup and version
-# management") -- that switch happens when this crate is extracted into that repo.
-mm-engine = { path = "../../../engine", default-features = false, features = ["client", "ffi"] }
+# A git dependency, pinned by the committed `Cargo.lock` beside this file (see dev/ffi.md,
+# "Competitor setup and version management"). Not a path dependency: a standalone clone of
+# python-starterpack has no engine checkout next to it, so a path would make the crate
+# unbuildable for every competitor and for the API's compile sandbox alike. Bumping the
+# engine is `cargo update -p mm-engine` here, and the same rev has to be set as the api
+# flake's `engine` input -- `HANDSHAKE_FINGERPRINT` fails the match if the two disagree.
+mm-engine = { git = "https://github.com/mechmania/engine.git", default-features = false, features = ["client", "ffi"] }
 # `mm-ffi-codegen` reads the registries `mm-engine` submits into. Same major version as the
 # one `mm-engine` resolves, or the two would collect into different registries and the
 # generator would see an empty one.
