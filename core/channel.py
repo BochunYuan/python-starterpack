@@ -147,8 +147,7 @@ class EngineChannel:
 
         global _channel
         _channel = self
-        # So the generated methods that need the channel can reach it -- today that is
-        # `GameState.stat`, which resolves an upgrade against the captured config.
+        # So any generated method that needs the channel can reach it.
         _b.attach(handle)
 
     @classmethod

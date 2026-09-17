@@ -111,7 +111,7 @@ impl Registry {
         // an unreferenced object file drops the registrations in it without a word. Better
         // to stop here than to write a plausible-looking half of the bindings.
         assert!(
-            types.len() >= 28 && !fns.is_empty() && !handles.is_empty() && consts.len() == 11,
+            types.len() >= 25 && !fns.is_empty() && !handles.is_empty() && consts.len() == 9,
             "the registry came back short ({} types, {} fns, {} handles, {} consts) -- \
              the linker has dropped registrations; see native/src/lib.rs",
             types.len(),
@@ -367,7 +367,6 @@ const SEMANTIC: &[(&str, &str)] = &[
     ("Team", TEAM_BODY),
     ("BotArray", BOT_ARRAY_BODY),
     ("BotState", BOT_STATE_BODY),
-    ("FabricatorState", FABRICATOR_STATE_BODY),
     ("FleetAction", FLEET_ACTION_BODY),
     ("GameState", GAME_STATE_BODY),
     ("TeamPair<u32>", TEAM_PAIR_BODY),
@@ -532,18 +531,11 @@ const BOT_STATE_BODY: &str = r#"
         return None if extractor is None else extractor.extracting
 "#;
 
-/// `engine/src/game/state.rs::FabricatorState::level`.
-const FABRICATOR_STATE_BODY: &str = r#"
-    def level(self, up: Upgrade) -> int:
-        """This fleet's level in `up`. Levels are fleet-wide and take effect immediately."""
-        return self.upgrades[int(up)]
-"#;
-
 /// `engine/src/game/state.rs::FleetAction::new`.
 const FLEET_ACTION_BODY: &str = r#"
     @classmethod
     def new(cls) -> FleetAction:
-        """The do-nothing action: no movement, no specials, no purchases.
+        """The do-nothing action: no movement, no specials, no rush order.
 
         Every Rust default in this struct is its zero value, and `ctypes` zeroes a fresh
         instance, so this is `FleetAction()` -- kept as the name bots construct through, the
@@ -571,13 +563,6 @@ const GAME_STATE_BODY: &str = r#"
         mm_payload_pos(self.capture, out)
         return Vec2(out[0], out[1])
 
-    def stat(self, team: Team, up: Upgrade) -> float:
-        """Effective value of `up` for `team`, that fleet's upgrades applied.
-
-        The one place a stat is resolved, on both sides of the ABI: the `Upgrade` -> table
-        mapping lives in the engine (`mm_stat`), and only the level crosses.
-        """
-        return mm_stat(_require_handle(), int(up), self.fabricators()[team].level(up))
 "#;
 
 /// `engine/src/game/team.rs::TeamPair`'s `Index<Team>`. The `me`/`other` fields stay public
@@ -1258,9 +1243,9 @@ _handle: object = None
 def attach(handle: object) -> None:
     """Register the open channel, so the methods that need one can reach it.
 
-    Only `GameState.stat` needs it today -- `mm_stat` resolves an upgrade against the
-    config the handshake captured, and a method on a state struct has no other route to
-    the channel that delivered it. `core/channel.py` calls this once, at open, which is
+    No generated method needs it today; it is the route a method on a state struct would
+    take to reach the config the handshake captured, since it has no other way to the
+    channel that delivered it. `core/channel.py` calls this once, at open, which is
     the same shape as `get_config()`: one match, one channel, one module global.
     """
     global _handle
@@ -1276,7 +1261,7 @@ def _require_handle() -> object:
     if _handle is None:
         raise RuntimeError(
             "no channel is attached -- open one through core.channel.EngineChannel "
-            "before asking the engine about upgrades"
+            "before asking the engine about the match config"
         )
     return _handle
 "#;
@@ -1545,7 +1530,7 @@ mod codegen_test {
         assert_eq!(peel_array("Vec2"), ("Vec2", vec![]));
         assert_eq!(peel_array("StateOption<Vec2>"), ("StateOption<Vec2>", vec![]));
         assert_eq!(peel_array("[BotAction; BOTS_MAX]"), ("BotAction", vec!["BOTS_MAX"]));
-        assert_eq!(peel_array("[f32; UPGRADE_LEVELS]"), ("f32", vec!["UPGRADE_LEVELS"]));
+        assert_eq!(peel_array("[Vec2; PAYLOAD_PATH_LEN]"), ("Vec2", vec!["PAYLOAD_PATH_LEN"]));
         assert_eq!(
             peel_array("[[MapTile; MAP_SIZE]; MAP_SIZE]"),
             ("MapTile", vec!["MAP_SIZE", "MAP_SIZE"])
@@ -1734,7 +1719,6 @@ mod codegen_test {
         };
 
         // A `StateOption` field, derived from the type.
-        assert_eq!(field("FleetAction", "upgrade"), "_upgrade");
         assert_eq!(field("SpecialState", "shot"), "_shot");
         assert_eq!(field("SpecialState", "healing"), "_healing");
         assert_eq!(field("SpecialState", "extracting"), "_extracting");
@@ -1771,7 +1755,7 @@ mod codegen_test {
         assert!(py.contains("    def class_(self) -> BotClass:"), "BotState lost its block");
         assert!(py.contains("    def payload_pos(self) -> Vec2:"), "GameState lost its block");
         // The two derived rules, likewise.
-        assert!(py.contains("    def upgrade(self, value: Optional[Upgrade]) -> None:"));
+        assert!(py.contains("    def shot(self) -> Optional[Vec2]:"));
         assert!(py.contains("    def TargetPosition(cls, pos: Vec2) -> TurnAction:"));
         // `StateOption` gets `Optional`, and *not* the tagged surface: `ffi.md` is explicit
         // that it presents as a plain `Optional[T]` with no wrapper to learn.

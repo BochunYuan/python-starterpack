@@ -30,8 +30,6 @@ from core._generated.bindings import (
     BOTS_MAX,
     MAP_SIZE,
     PAYLOAD_PATH_LEN,
-    UPGRADE_COUNT,
-    UPGRADE_LEVELS,
     BotAction,
     BotArray,
     BotClass,
@@ -48,7 +46,6 @@ from core._generated.bindings import (
     SpecialState,
     Team,
     TurnAction,
-    Upgrade,
     Vec2,
 )
 
@@ -64,7 +61,6 @@ __all__ = [
     "FabricatorState",
     "MapTile",
     "Team",
-    "Upgrade",
     "Vec2",
     # what you give back
     "FleetAction",
@@ -94,8 +90,6 @@ __all__ = [
     "BOTS_MAX",
     "MAP_SIZE",
     "PAYLOAD_PATH_LEN",
-    "UPGRADE_COUNT",
-    "UPGRADE_LEVELS",
     # stdlib, so a strategy can annotate without its own imports
     "List",
     "Optional",
