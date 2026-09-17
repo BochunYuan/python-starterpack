@@ -68,6 +68,7 @@ const PRIMITIVES: &[(&str, &str)] = &[
     ("i32", "ctypes.c_int32"),
     ("u8", "ctypes.c_uint8"),
     ("u64", "ctypes.c_uint64"),
+    ("i64", "ctypes.c_int64"),
     ("bool", "ctypes.c_bool"),
 ];
 
@@ -111,7 +112,7 @@ impl Registry {
         // an unreferenced object file drops the registrations in it without a word. Better
         // to stop here than to write a plausible-looking half of the bindings.
         assert!(
-            types.len() >= 25 && !fns.is_empty() && !handles.is_empty() && consts.len() == 9,
+            types.len() >= 25 && !fns.is_empty() && !handles.is_empty() && consts.len() == 11,
             "the registry came back short ({} types, {} fns, {} handles, {} consts) -- \
              the linker has dropped registrations; see native/src/lib.rs",
             types.len(),

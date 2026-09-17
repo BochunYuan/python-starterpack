@@ -23,10 +23,12 @@ from __future__ import annotations
 
 import ctypes
 from pathlib import Path
-from typing import Callable, List, Optional, Union
+from typing import Callable, List, NamedTuple, Optional, Union
 
 from core._generated import bindings as _b
 from core._generated.bindings import (
+    COMPUTE_BANK_TICKS,
+    COMPUTE_REFILL_TICKS,
     MM_CLOSED,
     MM_IO,
     MM_MALFORMED,
@@ -45,6 +47,10 @@ __all__ = [
     "EngineChannel",
     "EngineError",
     "Strategy",
+    "Budget",
+    "COMPUTE_BANK_TICKS",
+    "COMPUTE_REFILL_TICKS",
+    "get_budget",
     "get_config",
     "navigate_to",
     "path_length",
@@ -119,6 +125,45 @@ def get_config() -> GameConfig:
     if _config is None:
         raise RuntimeError("no config yet -- the handshake has not happened")
     return _config
+
+
+class Budget(NamedTuple):
+    """What this bot has left to spend, as of the tick it is currently being asked about.
+
+    Both numbers are in "ticks": multiples of the engine's own recent average per-tick CPU
+    cost. Deliberately not milliseconds -- the budget is denominated in that ratio, and the
+    same bot gets a different millisecond figure on a faster judge machine.
+    """
+
+    remaining: int
+    """Ticks left in the bank. Refills by `COMPUTE_REFILL_TICKS` every tick, capped at
+    `COMPUTE_BANK_TICKS`. **Can be negative**: an overspend is a debt, and while it is
+    negative the bot is not called at all -- each skipped tick pays some of it back, and the
+    only sign of one from in here is a jump in `state.tick`."""
+
+    last_charge: int
+    """What the previous tick cost, in the same unit. `0` before the first charge."""
+
+
+def get_budget() -> Budget:
+    """What this bot has left to spend. Valid from the first tick onwards.
+
+    The point of it is deciding what you can afford *this* tick -- gate an expensive search
+    on `get_budget().remaining` and fall back to something cheap when the bank is low,
+    rather than being sat out for the ticks it takes to pay an overspend back.
+
+    Free to call: `await_tick` already snapshotted the numbers, so this reads them rather
+    than crossing the channel, and the read is not billed to you either way.
+    """
+    remaining = ctypes.c_int64()
+    last_charge = ctypes.c_uint64()
+    _check(
+        _b.mm_channel_budget(
+            _live_handle(), ctypes.byref(remaining), ctypes.byref(last_charge)
+        ),
+        "budget",
+    )
+    return Budget(remaining.value, last_charge.value)
 
 
 class EngineChannel:
