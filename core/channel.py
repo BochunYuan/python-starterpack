@@ -12,7 +12,7 @@ What is left over, and lives here, is the part no registry describes:
 - the navigation and helper wrappers, which take `Vec2` and return `Optional`, instead of
   loose floats and sentinel numbers;
 - `move_bot` / `turn_to_angle` / `turn_towards`, the same three constructors the Rust
-  starterpack has in `src/core/mod.rs`.
+  starterpack has in `src/core.rs`.
 
 Synchronous throughout. The C ABI is blocking by construction -- the handle owns a tokio
 runtime on the Rust side and every entry point is a `block_on` -- so there is no `asyncio`
@@ -401,7 +401,7 @@ def payload_pos(capture: float) -> Vec2:
 # action constructors
 # -----------------------------------------------------------------------------------
 #
-# The same three the Rust starterpack has in `src/core/mod.rs`. `SpecialAction` and the
+# The same three the Rust starterpack has in `src/core.rs`. `SpecialAction` and the
 # other two `TurnAction` forms are constructed straight off the generated classes --
 # `SpecialAction.Battle(fire=True)`, `TurnAction.Direction(power=0.5)`.
 
