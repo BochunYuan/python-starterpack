@@ -12,12 +12,11 @@ def get_strategy(team: int) -> Strategy:
         return go_to_payload
     else:
         print("Hello! I am team B (on the top right)")
-        return do_nothing
+        return basic_strategy
 
     # NOTE when actually submitting your bot, you probably want to have the SAME strategy
     # for both sides: the engine mirrors the world for the top-right team, so there is
     # nothing for a side to specialise in.
-
 
 def go_to_payload(state: GameState) -> FleetAction:
     """Very simple strategy to storm the center point."""
@@ -49,12 +48,59 @@ def go_to_payload(state: GameState) -> FleetAction:
 
     return action
 
+def basic_strategy(state: GameState) -> FleetAction:
+    """Assign one bot to extract from our deposit, one bot to hold the payload, and send
+    every remaining bot after the nearest enemy."""
 
-def do_nothing(state: GameState) -> FleetAction:
-    """This strategy will do nothing :(
+    action = FleetAction.new()
 
-    Note that doing nothing also means never building a bot: `FleetAction.new()` leaves the
-    fabricator on its own cadence and buys nothing, so this fleet stays at whatever the
-    engine hands it.
-    """
-    return FleetAction.new()
+    payload = state.payload_pos()
+
+    # make a battle bot by default
+    next_bot = BotClass.Battle
+
+    # `next_bot_creation: 0` means both fleets' very first build is always a Extractor
+    # (the engine's own default), and that first bot always lands in slot 0 -- so bot id 0
+    # missing means our extractor died and the fabricator should replace it before anything
+    # else.
+    if not state.fleet_me.get(0):
+        next_bot = BotClass.Extractor
+
+    assigned_contester = False
+
+    for bot in state.fleet_me:
+
+        bot_action = action.bots[bot.id]
+
+        if bot.class_ == BotClass.Extractor:
+            # Sits just off `state.deposit_me.pos` (the deposit itself is a solid area, so
+            # standing dead-center is not the mining spot) -- pick a point on our own edge
+            # of the deposit ring, not the true center.
+            bot_action.move_action = move_bot(navigate_to(bot.pos, Vec2(23, 31)))
+            bot_action.turn_action = turn_towards(state.deposit_me.pos)
+            bot_action.special_action = SpecialAction.Extractor(mine=True)
+            continue
+
+        if not assigned_contester:
+            bot_action.move_action = move_bot(navigate_to(bot.pos, payload))
+            assigned_contester = True
+            continue
+
+        # find the closest enemy
+        closest_enemy = None
+        for enemy in state.fleet_other:
+            if closest_enemy is None or bot.pos.dist_sq(enemy.pos) < bot.pos.dist_sq(closest_enemy):
+                closest_enemy = enemy.pos
+
+        if closest_enemy is None:
+            break
+        bot_action.move_action = move_bot(navigate_to(bot.pos, closest_enemy))
+        bot_action.turn_action = turn_towards(closest_enemy)
+        bot_action.special_action = SpecialAction.Battle(fire=True)
+
+    action.fabricator_next = int(next_bot)
+
+    # greedily spend our tokens to get the next bot asap
+    action.rush_order = True
+
+    return action
