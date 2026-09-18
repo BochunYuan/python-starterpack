@@ -255,7 +255,7 @@ dependencies = [
 [[package]]
 name = "mm-engine"
 version = "0.1.0"
-source = "git+https://github.com/mechmania/engine.git#03179efe258cc9af9ad2cf4df71b71c0b9079e1e"
+source = "git+https://github.com/mechmania/engine.git#b6720f6091771c68f3807f6804e9f5ff94054093"
 dependencies = [
  "anyhow",
  "clap",
@@ -275,7 +275,7 @@ dependencies = [
 [[package]]
 name = "mm-macros"
 version = "0.1.0"
-source = "git+https://github.com/mechmania/engine.git#03179efe258cc9af9ad2cf4df71b71c0b9079e1e"
+source = "git+https://github.com/mechmania/engine.git#b6720f6091771c68f3807f6804e9f5ff94054093"
 dependencies = [
  "proc-macro2",
  "quote",
