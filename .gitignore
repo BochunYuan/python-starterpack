@@ -3,3 +3,6 @@ __pycache__*
 logs*
 native/target/
 core/_generated/
+
+# mm-cli local engine cache and build state (machine-specific, contains .envrc)
+.mm/
